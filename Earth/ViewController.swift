@@ -23,7 +23,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.showsStatistics = true
         
         // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        let scene = SCNScene()
         
         // Set the scene to the view
         sceneView.scene = scene
@@ -45,17 +45,29 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Pause the view's session
         sceneView.session.pause()
     }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let result = sceneView.hitTest(touch.location(in: sceneView), types: .featurePoint)
+        guard let hitResult = result.last else { return }
+        let hitMatrix = hitResult.worldTransform
+        let matrix = SCNMatrix4(hitMatrix)
+        let hitVector = SCNVector3.init(x: matrix.m41, y: matrix.m42, z: matrix.m43)
+        createEarth(position: hitVector)
+    }
+    
+    func createEarth(position: SCNVector3) {
+        let earthShape = SCNSphere(radius: 0.2)
+        let earthNode = SCNNode(geometry: earthShape)
+        earthNode.position = position
+        earthNode.geometry?.firstMaterial?.diffuse.contents = UIImage(named: "diffusePic")
+        earthNode.geometry?.firstMaterial?.specular.contents = UIImage(named: "specularPic")
+        earthNode.geometry?.firstMaterial?.emission.contents = UIImage(named: "cloudsPic")
+        earthNode.geometry?.firstMaterial?.normal.contents = UIImage(named: "normalPic")
+        sceneView.scene.rootNode.addChildNode(earthNode)
+    }
 
     // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
     
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
